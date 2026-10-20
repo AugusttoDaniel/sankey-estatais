@@ -1,0 +1,1123 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Série Histórica e Estatais Brasileiras — Studio Sankey JSON</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Inter & Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@700;800;900&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #0f172a;
+      color: #f8fafc;
+    }
+    .font-display {
+      font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+    }
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #1e293b;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #475569;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #64748b;
+    }
+    .poster-wrapper {
+      box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.7), 0 0 1px 1px rgba(255, 255, 255, 0.1);
+    }
+    .tab-active {
+      background-color: #2563eb;
+      color: #ffffff;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col lg:flex-row overflow-x-hidden">
+
+  <!-- ==================== LEFT SIDEBAR ==================== -->
+  <aside class="w-full lg:w-[440px] xl:w-[480px] bg-slate-900 border-b lg:border-b-0 lg:border-r border-slate-800 flex flex-col lg:h-screen lg:sticky lg:top-0 z-20 shrink-0">
+
+    <!-- App Header -->
+    <div class="p-4 sm:p-5 border-b border-slate-800 flex items-center justify-between bg-slate-950/60">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-emerald-500 flex items-center justify-center shadow-lg shadow-blue-500/20">
+          <svg viewBox="0 0 256 256" class="w-6 h-6" aria-hidden="true" focusable="false">
+            <rect x="44" y="72" width="26" height="112" rx="3" fill="#ffffff"/>
+            <path d="M80 72 C140 72, 152 46, 212 46 L212 84 C152 84, 140 110, 80 110 Z" fill="#ffffff"/>
+            <path d="M80 124 C140 124, 152 150, 212 150 L212 210 C152 210, 140 184, 80 184 Z" fill="#a7f3d0"/>
+          </svg>
+        </div>
+        <div>
+          <h1 class="font-display font-extrabold text-base sm:text-lg tracking-tight text-white leading-tight">
+            Sankey Estatais <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30 ml-1">2020-2026</span>
+          </h1>
+          <p class="text-xs text-slate-400">Série Histórica & 44 Estatais Federais</p>
+        </div>
+      </div>
+      <button id="btnResetDefault" onclick="resetDefault()" title="Restaurar dados originais" class="text-xs text-slate-400 hover:text-white px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 transition">
+        <i class="fa-solid fa-rotate-left mr-1"></i>Resetar
+      </button>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="grid grid-cols-5 gap-1 p-2 bg-slate-950/80 border-b border-slate-800 text-[11px] font-semibold">
+      <button onclick="switchSidebarTab('historico')" id="tabBtn-historico" class="tab-active py-2 px-1 rounded-lg transition flex flex-col items-center gap-1">
+        <i class="fa-solid fa-timeline text-sm"></i>
+        <span>Histórico</span>
+      </button>
+      <button onclick="setMainView('soma')" id="tabBtn-soma" class="text-emerald-400 hover:text-white py-2 px-1 rounded-lg transition flex flex-col items-center gap-1 bg-emerald-950/30 border border-emerald-500/20">
+        <i class="fa-solid fa-scale-balanced text-sm"></i>
+        <span>Lucro x Prej.</span>
+      </button>
+      <button onclick="switchSidebarTab('catalogo')" id="tabBtn-catalogo" class="text-slate-400 hover:text-white py-2 px-1 rounded-lg transition flex flex-col items-center gap-1">
+        <i class="fa-solid fa-building-columns text-sm"></i>
+        <span>44 Estatais</span>
+      </button>
+      <button onclick="switchSidebarTab('json')" id="tabBtn-json" class="text-slate-400 hover:text-white py-2 px-1 rounded-lg transition flex flex-col items-center gap-1">
+        <i class="fa-solid fa-code text-sm"></i>
+        <span>JSON</span>
+      </button>
+      <button onclick="switchSidebarTab('estilo')" id="tabBtn-estilo" class="text-slate-400 hover:text-white py-2 px-1 rounded-lg transition flex flex-col items-center gap-1">
+        <i class="fa-solid fa-sliders text-sm"></i>
+        <span>Ajustes</span>
+      </button>
+    </div>
+
+    <!-- Sidebar Content Container -->
+    <div class="flex-1 overflow-y-auto p-4 space-y-5">
+
+      <!-- TAB 1: SÉRIE HISTÓRICA & DESTAQUES -->
+      <div id="tabPanel-historico" class="space-y-5">
+        <!-- Série Histórica Anual (2020 - 1S26) -->
+        <div>
+          <div class="flex items-center justify-between mb-2.5">
+            <span class="text-xs font-bold uppercase tracking-wider text-blue-400 flex items-center gap-1.5">
+              <i class="fa-solid fa-calendar-days"></i> Série Histórica Consolidada (2020 - 1S26)
+            </span>
+            <span class="text-[11px] text-slate-400">SEST / MGI</span>
+          </div>
+          <p class="text-[10px] text-amber-300/80 mb-2">Dados agregados da SEST: 2020 das edições originais (subvenção = recursos recebidos da União); 2021–2025 da planilha de séries históricas (ano-base 2025); 1S26 de notícias; a composição do Sankey de cada ano é estimada.</p>
+          <div class="space-y-2" id="serieHistoricaList">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+
+        <!-- Principais Estatais (DRE 2T26) -->
+        <div>
+          <div class="flex items-center justify-between mb-2.5">
+            <span class="text-xs font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
+              <i class="fa-solid fa-chart-pie"></i> Principais Estatais (2T26)
+            </span>
+            <span class="text-[11px] text-slate-400">RI Oficiais</span>
+          </div>
+          <div class="grid grid-cols-1 gap-2" id="principaisList">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+
+        <!-- Quick Interactive Editor -->
+        <div class="bg-slate-800/60 border border-slate-700/80 rounded-xl p-3.5 space-y-3">
+          <div class="flex items-center justify-between">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300">
+              <i class="fa-solid fa-pen-to-square text-blue-400 mr-1"></i> Edição Rápida dos Nós
+            </h3>
+            <button onclick="switchSidebarTab('json')" class="text-[11px] text-blue-400 hover:underline">
+              Abrir JSON Completo →
+            </button>
+          </div>
+          <div id="quickNodeEditor"></div>
+        </div>
+      </div>
+
+      <!-- TAB 2: CATÁLOGO COMPLETO DAS 44 ESTATAIS -->
+      <div id="tabPanel-catalogo" class="hidden space-y-4">
+        <div class="bg-slate-800/70 p-3 rounded-xl border border-slate-700 space-y-2.5">
+          <div class="relative">
+            <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+            <input type="text" id="searchCatalog" oninput="renderCatalogList()" placeholder="Buscar entre as estatais..." class="w-full pl-8 pr-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white placeholder-slate-400 focus:outline-none focus:border-blue-500">
+          </div>
+          <div class="flex gap-1.5 text-[11px]">
+            <button onclick="setCatalogFilter('todas')" id="catFilter-todas" class="flex-1 py-1 px-2 rounded bg-blue-600 text-white font-semibold">Todas</button>
+            <button onclick="setCatalogFilter('nao_dep')" id="catFilter-nao_dep" class="flex-1 py-1 px-2 rounded bg-slate-900 text-slate-300 hover:bg-slate-700">Não Dep.</button>
+            <button onclick="setCatalogFilter('dep')" id="catFilter-dep" class="flex-1 py-1 px-2 rounded bg-slate-900 text-slate-300 hover:bg-slate-700">Dependentes</button>
+          </div>
+        </div>
+
+        <div id="catalogListContainer" class="space-y-1.5 max-h-[540px] overflow-y-auto pr-1"></div>
+      </div>
+
+      <!-- TAB 3: EDITOR JSON -->
+      <div id="tabPanel-json" class="hidden space-y-3 flex flex-col h-full">
+        <div class="flex items-center justify-between gap-2">
+          <button onclick="applyJsonFromEditor()" class="flex-1 py-2 px-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-lg shadow transition flex items-center justify-center gap-1.5">
+            <i class="fa-solid fa-play"></i> Aplicar JSON no Gráfico
+          </button>
+          <button onclick="copyCurrentJson()" class="py-2 px-3 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs rounded-lg border border-slate-700 transition flex items-center gap-1.5">
+            <i class="fa-regular fa-copy"></i> Copiar
+          </button>
+        </div>
+        <div id="jsonErrorBox" class="hidden p-2.5 rounded-lg bg-red-950/80 border border-red-500/50 text-red-200 text-xs"></div>
+        <textarea id="jsonTextarea" spellcheck="false" class="w-full h-[420px] font-mono text-xs bg-slate-950 text-emerald-300 border border-slate-800 rounded-xl p-3 focus:outline-none focus:border-blue-500 leading-relaxed resize-y"></textarea>
+      </div>
+
+      <!-- TAB 4: AJUSTES DE ESTILO -->
+      <div id="tabPanel-estilo" class="hidden space-y-4">
+        <div class="bg-slate-800/60 border border-slate-700 rounded-xl p-3.5 space-y-3">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-blue-400">Textos do Cartaz</h3>
+          <div>
+            <label class="block text-[11px] text-slate-400 mb-1">Prefixo Superior</label>
+            <input type="text" id="inputPrefix" oninput="updateStyleConfig()" class="w-full px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white">
+          </div>
+          <div>
+            <label class="block text-[11px] text-slate-400 mb-1">Nome Principal no Topo</label>
+            <input type="text" id="inputCompanyTitle" oninput="updateStyleConfig()" class="w-full px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white font-bold">
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-[11px] text-slate-400 mb-1">Subtítulo 1</label>
+              <input type="text" id="inputTitlePart1" oninput="updateStyleConfig()" class="w-full px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white">
+            </div>
+            <div>
+              <label class="block text-[11px] text-slate-400 mb-1">Subtítulo 2</label>
+              <input type="text" id="inputTitlePart2" oninput="updateStyleConfig()" class="w-full px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white">
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Sidebar Footer -->
+    <div class="p-3 bg-slate-950 border-t border-slate-800 flex items-center justify-between text-[11px] text-slate-400">
+      <span><i class="fa-solid fa-database text-emerald-400 mr-1"></i>Série 2020-2026</span>
+      <button onclick="toggleViewMode()" id="btnToggleMosaic" class="text-blue-400 hover:text-blue-300 font-semibold">
+        <i class="fa-solid fa-table-cells mr-1"></i>Mosaico (44)
+      </button>
+    </div>
+  </aside>
+
+  <!-- ==================== MAIN WORKSPACE ==================== -->
+  <main class="flex-1 flex flex-col min-h-screen bg-slate-950">
+
+    <!-- Top Action Toolbar -->
+    <header class="px-4 sm:px-6 py-3 bg-slate-900/90 border-b border-slate-800 flex flex-wrap items-center justify-between gap-3 sticky top-0 z-10 backdrop-blur">
+      <div class="flex flex-wrap items-center gap-2" id="topSummaryBar"></div>
+
+      <div class="flex flex-wrap items-center gap-2 ml-auto">
+        <div class="inline-flex rounded-lg bg-slate-800 p-0.5 border border-slate-700 text-xs">
+          <button onclick="setMainView('poster')" id="viewBtn-poster" class="px-3 py-1.5 rounded-md bg-blue-600 text-white font-semibold transition flex items-center gap-1.5">
+            <i class="fa-solid fa-image"></i> Cartaz Sankey
+          </button>
+          <button onclick="setMainView('soma')" id="viewBtn-soma" class="px-3 py-1.5 rounded-md text-slate-300 hover:text-white font-semibold transition flex items-center gap-1.5">
+            <i class="fa-solid fa-scale-balanced"></i> Soma: Lucro x Prejuízo
+          </button>
+          <button onclick="setMainView('mosaic')" id="viewBtn-mosaic" class="px-3 py-1.5 rounded-md text-slate-300 hover:text-white font-semibold transition flex items-center gap-1.5">
+            <i class="fa-solid fa-grip"></i> Mosaico
+          </button>
+        </div>
+
+        <button onclick="exportPosterPNG()" class="px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-lg shadow-emerald-600/20 transition flex items-center gap-1.5">
+          <i class="fa-solid fa-download"></i> Baixar Imagem (PNG HD)
+        </button>
+        <button onclick="exportPosterSVG()" class="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs border border-slate-700 transition flex items-center gap-1.5">
+          <i class="fa-solid fa-bezier-curve"></i> SVG
+        </button>
+      </div>
+    </header>
+
+    <!-- Toast Notification -->
+    <div id="toastNotification" class="fixed bottom-5 right-5 z-50 hidden bg-slate-900 border border-emerald-500/60 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-2.5 text-xs font-medium">
+      <i class="fa-solid fa-circle-check text-emerald-400 text-base"></i>
+      <span id="toastMessage">Ação concluída com sucesso!</span>
+    </div>
+
+    <!-- VIEW 1: SANKEY POSTER CANVAS -->
+    <section id="posterViewSection" class="flex-1 flex flex-col items-center justify-center p-4 sm:p-8 overflow-auto">
+      <div id="posterContainer" class="poster-wrapper w-full max-w-[780px] rounded-2xl overflow-hidden transition-all duration-300 bg-[#ededf0]">
+        <div id="svgCanvasWrapper" class="w-full h-auto"></div>
+      </div>
+      <div class="mt-4 max-w-[780px] w-full flex flex-wrap items-center justify-between gap-2 text-xs text-slate-400 px-1">
+        <span><i class="fa-solid fa-wand-magic-sparkles text-blue-400 mr-1"></i>Clique em qualquer ano da série histórica (2020 a 1S26) para ver o infográfico Sankey correspondente.</span>
+        <span id="currentEntityFootnote" class="text-slate-300 font-medium"></span>
+      </div>
+    </section>
+
+    <!-- VIEW 2: SOMA DE LUCRO VS PREJUÍZO -->
+    <section id="somaViewSection" class="hidden flex-1 p-4 sm:p-8 overflow-y-auto space-y-6">
+      <div class="max-w-7xl mx-auto space-y-6">
+        <div class="bg-gradient-to-r from-slate-900 via-indigo-950/70 to-slate-900 border border-slate-800 rounded-2xl p-5 sm:p-6 space-y-4">
+          <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            <div>
+              <span class="text-xs font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
+                <i class="fa-solid fa-calculator"></i> Consolidador Interativo • Estatais + Subsidiárias
+              </span>
+              <h2 class="text-xl sm:text-2xl font-display font-black text-white mt-1">
+                Soma Geral das Estatais: Quem Dá Lucro vs. Quem Dá Prejuízo
+              </h2>
+              <p class="text-xs sm:text-sm text-slate-300 mt-1 max-w-3xl">
+                Veja a soma separada das estatais lucrativas, o peso das deficitárias e o custeio das dependentes do Tesouro.
+              </p>
+            </div>
+            <button onclick="generateSankeyFromCurrentSoma()" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-lg transition flex items-center gap-2">
+              <i class="fa-solid fa-diagram-project"></i> Gerar Cartaz Sankey desta Soma
+            </button>
+          </div>
+          <div class="pt-3 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-3">
+            <div class="flex flex-wrap items-center gap-1.5 text-xs">
+              <span class="text-slate-400 font-semibold mr-1">Cenário:</span>
+              <button onclick="setSomaScenario('todas_44')" id="scenBtn-todas_44" class="px-3 py-1.5 rounded-lg bg-blue-600 text-white font-bold transition">Todas</button>
+              <button onclick="setSomaScenario('sem_petrobras')" id="scenBtn-sem_petrobras" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold transition">Sem Petrobras</button>
+              <button onclick="setSomaScenario('sem_petro_bancos')" id="scenBtn-sem_petro_bancos" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-500/30 font-semibold transition">Sem Petro e Sem Bancos</button>
+            </div>
+            <span id="somaActiveCountBadge" class="text-xs font-mono bg-slate-950 px-3 py-1 rounded-lg border border-slate-800 text-slate-300"></span>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5" id="somaKpiCards"></div>
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-3" id="somaThermometerBox"></div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div class="bg-slate-900 border border-emerald-500/30 rounded-2xl overflow-hidden flex flex-col">
+            <div class="p-4 bg-emerald-950/30 border-b border-emerald-500/20 flex items-center justify-between">
+              <h3 class="font-display font-bold text-sm text-white">Estatais no Azul (Lucrativas)</h3>
+              <div class="text-base font-black text-emerald-400" id="totalLucrativasHeader">R$ 0,0 M</div>
+            </div>
+            <div class="p-3 space-y-2 max-h-[540px] overflow-y-auto" id="listaLucrativasContainer"></div>
+          </div>
+
+          <div class="bg-slate-900 border border-red-500/30 rounded-2xl overflow-hidden flex flex-col">
+            <div class="p-4 bg-red-950/30 border-b border-red-500/20 flex items-center justify-between">
+              <h3 class="font-display font-bold text-sm text-white">Estatais no Vermelho & Dependentes</h3>
+              <div class="text-base font-black text-red-400" id="totalDeficitariasHeader">R$ 0,0 M</div>
+            </div>
+            <div class="p-3 space-y-2 max-h-[540px] overflow-y-auto" id="listaDeficitariasContainer"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 3: MOSAICO DAS ESTATAIS -->
+    <section id="mosaicViewSection" class="hidden flex-1 p-4 sm:p-8 overflow-y-auto space-y-6">
+      <div class="max-w-7xl mx-auto space-y-6">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 sm:p-6">
+          <h2 class="text-xl font-display font-black text-white">Mosaico das Estatais Federais</h2>
+          <p class="text-xs text-slate-300 mt-1">Clique em qualquer estatal para gerar o diagrama individual.</p>
+          <p id="mosaicCoverageNote" class="text-xs text-amber-300 mt-2"></p>
+        </div>
+        <div id="mosaicGridContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3.5"></div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ==================== MODAL: EDIÇÃO RÁPIDA ==================== -->
+  <div id="quickModal" class="hidden fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4" onclick="if (event.target === this) closeQuickModal()">
+    <div class="w-full max-w-md bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl p-5 space-y-4" role="dialog" aria-modal="true" aria-labelledby="quickModalTitle">
+      <div class="flex items-center justify-between">
+        <h3 id="quickModalTitle" class="font-display font-bold text-white text-sm">Edição Rápida dos Valores</h3>
+        <button onclick="closeQuickModal()" class="text-slate-400 hover:text-white px-2 py-1" aria-label="Fechar"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <p class="text-[11px] text-slate-400">Valores em R$ bi. As alterações só entram no cartaz ao clicar em Aplicar.</p>
+      <div id="quickModalFields" class="grid grid-cols-2 gap-3"></div>
+      <div id="quickModalError" class="hidden text-xs text-red-200 bg-red-950/60 border border-red-500/40 rounded-lg p-2"></div>
+      <div class="flex justify-end gap-2">
+        <button onclick="closeQuickModal()" class="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold">Cancelar</button>
+        <button onclick="applyQuickModal()" class="px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold">Aplicar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== JAVASCRIPT ==================== -->
+  <script>
+    const TOTAL_ESTATAIS_ALVO = 44;
+
+    const HISTORICO_ANUAL = [
+      { ano: 2020, faturamento_total_bi: 737.4, lucro_liquido_agregado_bi: 60.6, subvencoes_tesouro_bi: 19.4, investimentos_bi: 83.8, destaque: "Ano de pandemia; forte impacto nos transportes e aviação." },
+      { ano: 2021, faturamento_total_bi: 1000.1, lucro_liquido_agregado_bi: 187.5, subvencoes_tesouro_bi: 20.3, investimentos_bi: 57.5, destaque: "Lucro recorde impulsionado pelo preço do petróleo e alta dos juros." },
+      { ano: 2022, faturamento_total_bi: 1316.4, lucro_liquido_agregado_bi: 275.1, subvencoes_tesouro_bi: 22.2, investimentos_bi: 53.9, destaque: "Pico histórico de faturamento e lucro com Brent elevado." },
+      { ano: 2023, faturamento_total_bi: 1248.0, lucro_liquido_agregado_bi: 197.9, subvencoes_tesouro_bi: 23.9, investimentos_bi: 83.6, destaque: "Queda de 28% no lucro por normalização de commodities; investimento +55%." },
+      { ano: 2024, faturamento_total_bi: 1309.7, lucro_liquido_agregado_bi: 116.5, subvencoes_tesouro_bi: 27.2, investimentos_bi: 96.0, destaque: "Faturamento recorde de R$ 1,3 tri, mas margens menores na Petrobras." },
+      { ano: 2025, faturamento_total_bi: 1392.0, lucro_liquido_agregado_bi: 169.4, subvencoes_tesouro_bi: 30.9, investimentos_bi: 115.9, destaque: "Lucro cresceu 45,4% para R$ 169,4 bi. PL superou R$ 1 trilhão." },
+      { ano: "1S26", faturamento_total_bi: 735.0, lucro_liquido_agregado_bi: 82.4, subvencoes_tesouro_bi: 16.2, investimentos_bi: 61.0, destaque: "Petrobras e bancos sólidos, enquanto estatais logísticas (Correios) pressionam.", nota_verificacao: "não verificado" }
+    ];
+
+    const DETAILED_PRESETS = {
+      "HIST_2025": {
+        id: "HIST_2025",
+        categoria: "historico",
+        prefixo: "ESTATAIS",
+        nome_exibicao: "CONSOLIDADAS 2025",
+        subtitulo_1: "BALANÇO",
+        subtitulo_2: "ANUAL",
+        cor_marca: "#2563eb",
+        icone_marca: "chart",
+        periodo: "Ano-base 2025",
+        fonte: "Fonte: Relatório Agregado SEST/MGI (2025)",
+        receita_label: "Faturamento\nTotal",
+        receita_total: 1400.0,
+        segmentos: [
+          { nome: "Bancos e Fomento\n(BB, Caixa, BNDES)", valor: 720.0, icone: "bank" },
+          { nome: "Petróleo e Gás\n(Petrobras, PPSA)", valor: 590.0, icone: "oil" },
+          { nome: "Logística e TI\n(Correios, Serpro)", valor: 59.1, icone: "truck" },
+          { nome: "Subvenção Tesouro\n(17 Dependentes)", valor: 30.9, icone: "landmark" }
+        ],
+        cpv_label: "CPV, Captação e Custos",
+        cpv_valor: 820.0,
+        lucro_bruto_label: "Margem\nBruta",
+        lucro_bruto_valor: 580.0,
+        despesas_op_label: "Despesas Op. e Pessoal",
+        despesas_op_valor: 295.0,
+        lucro_op_label: "Resultado Operacional",
+        lucro_op_valor: 285.0,
+        ir_label: "IR/CSLL",
+        ir_valor: 91.6,
+        desp_fin_label: "Prejuízos / Outros",
+        desp_fin_valor: 24.0,
+        lucro_liquido_label: "Lucro\nLíquido",
+        lucro_liquido_valor: 169.4
+      },
+      "PETROBRAS_2T26": {
+        id: "PETROBRAS_2T26",
+        categoria: "principal",
+        prefixo: "COMO A",
+        nome_exibicao: "PETROBRAS",
+        subtitulo_1: "FAZ",
+        subtitulo_2: "DINHEIRO",
+        cor_marca: "#008542",
+        icone_marca: "oil",
+        periodo: "2T26",
+        fonte: "Fonte: RI Petrobras - 2T26",
+        receita_label: "Receita Vendas",
+        receita_total: 169.5,
+        segmentos: [
+          { nome: "Mercado Interno", valor: 98.4, icone: "gas" },
+          { nome: "Exportação", valor: 49.2, icone: "ship" },
+          { nome: "Gás e Energia", valor: 21.9, icone: "flame" }
+        ],
+        cpv_label: "CPV",
+        cpv_valor: 79.2,
+        lucro_bruto_label: "Lucro Bruto",
+        lucro_bruto_valor: 90.3,
+        despesas_op_label: "Despesas Op.",
+        despesas_op_valor: 14.5,
+        lucro_op_label: "Lucro Op.",
+        lucro_op_valor: 75.8,
+        ir_label: "IR+CSLL",
+        ir_valor: 21.88,
+        desp_fin_label: "Desp Fin",
+        desp_fin_valor: 1.52,
+        lucro_liquido_label: "Lucro Líquido",
+        lucro_liquido_valor: 52.4
+      }
+    };
+
+    // Fonte: Relatório Agregado SEST/MGI, ano-base 2025 (planilha Anexo I). Valores em R$ bi.
+    // cpv/desp/trib não são publicados por empresa no relatório (zerados).
+    const CATALOG_44_ESTATAIS = [
+      { id: 1, sigla: "CEAGESP", nome: "Ceagesp – Companhia de Entrepostos e Armazéns Gerais de São Paulo", dep: false, setor: "Abastecimento e segurança alimentar", rec: 0.173, sub: 0, cpv: 0, desp: 0, trib: 0, ll: 0.002 },
+      { id: 2, sigla: "CEASAMINAS", nome: "CeasaMinas – Centrais de Abastecimento de Minas Gerais S.A.", dep: false, setor: "Abastecimento e segurança alimentar", rec: 0, sub: 0, cpv: 0, desp: 0, trib: 0, ll: 0, semDados: true },
+      { id: 3, sigla: "CONAB", nome: "Conab – Companhia Nacional de Abastecimento", dep: true, setor: "Abastecimento e segurança alimentar", rec: 0.226, sub: 1.327, cpv: 0, desp: 0, trib: 0, ll: -0.005 },
+      { id: 4, sigla: "EMBRAPA", nome: "Embrapa – Empresa Brasileira de Pesquisa Agropecuária", dep: true, setor: "Abastecimento e segurança alimentar", rec: 0.072, sub: 4.501, cpv: 0, desp: 0, trib: 0, ll: -0.304 },
+      { id: 5, sigla: "CEITEC", nome: "Ceitec – Centro Nacional de Tecnologia Eletrônica Avançada", dep: true, setor: "Comunicações e tecnologia", rec: 0.007, sub: 0.069, cpv: 0, desp: 0, trib: 0, ll: -0.017 },
+      { id: 6, sigla: "DATAPREV", nome: "Dataprev – Empresa de Tecnologia e Informações da Previdência Social", dep: false, setor: "Comunicações e tecnologia", rec: 2.741, sub: 0, cpv: 0, desp: 0, trib: 0, ll: 0.9 },
+      { id: 7, sigla: "EBC", nome: "EBC – Empresa Brasil de Comunicação", dep: true, setor: "Comunicações e tecnologia", rec: 0.095, sub: 0.61, cpv: 0, desp: 0, trib: 0, ll: 0.01 },
+      { id: 8, sigla: "CORREIOS", nome: "Correios – Empresa Brasileira de Correios e Telégrafos", dep: false, setor: "Comunicações e tecnologia", rec: 17.34, sub: 0, cpv: 0, desp: 0, trib: 0, ll: -8.458 },
+      { id: 9, sigla: "SERPRO", nome: "Serpro – Serviço Federal de Processamento de Dados", dep: false, setor: "Comunicações e tecnologia", rec: 5.391, sub: 0, cpv: 0, desp: 0, trib: 0, ll: 0.755 },
+      { id: 10, sigla: "TELEBRAS", nome: "Telebras – Telecomunicações Brasileiras S.A.", dep: true, setor: "Comunicações e tecnologia", rec: 0.541, sub: 0.407, cpv: 0, desp: 0, trib: 0, ll: 0.141 },
+      { id: 11, sigla: "AMAZUL", nome: "Amazul – Amazônia Azul Tecnologias de Defesa S.A.", dep: true, setor: "Defesa", rec: 0.02, sub: 0.513, cpv: 0, desp: 0, trib: 0, ll: 0.007 },
+      { id: 12, sigla: "EMGEPRON", nome: "Emgepron – Empresa Gerencial de Projetos Navais", dep: false, setor: "Defesa", rec: 0.148, sub: 0, cpv: 0, desp: 0, trib: 0, ll: 0.32 },
+      { id: 13, sigla: "IMBEL", nome: "Imbel – Indústria de Material Bélico do Brasil", dep: true, setor: "Defesa", rec: 0.249, sub: 0.239, cpv: 0, desp: 0, trib: 0, ll: 0.087 },
+      { id: 14, sigla: "NAV BRASIL", nome: "NAV Brasil – Serviços de Navegação Aérea S.A.", dep: false, setor: "Defesa", rec: 0.976, sub: 0, cpv: 0, desp: 0, trib: 0, ll: 0.152 },
+      { id: 15, sigla: "BASA", nome: "Basa – Banco da Amazônia S.A.", dep: false, setor: "Financeiro", rec: 7.26, sub: 0, cpv: 0, desp: 0, trib: 0, ll: 1.105 },
+      { id: 16, sigla: "BB", nome: "Banco do Brasil (grupo)", dep: false, setor: "Financeiro", rec: 339.205, sub: 0, cpv: 0, desp: 0, trib: 0, ll: 17.808 },
+      { id: 17, sigla: "BNB", nome: "BNB – Banco do Nordeste do Brasil S.A.", dep: false, setor: "Financeiro", rec: 14.25, sub: 0, cpv: 0, desp: 0, trib: 0, ll: 3.084 },
+      { id: 18, sigla: "BNDES", nome: "BNDES – Banco Nacional do Desenvolvimento Econômico e Social (grupo)", dep: false, setor: "Financeiro", rec: 73.809, sub: 0, cpv: 0, desp: 0, trib: 0, ll: 25.572 },
+      { id: 19, sigla: "CAIXA", nome: "CEF – Caixa Econômica Federal (grupo)", dep: false, setor: "Financeiro", rec: 272.474, sub: 0, cpv: 0, desp: 0, trib: 0, ll: 16.052 },
+      { id: 20, sigla: "FINEP", nome: "Finep – Financiadora de Estudos e Projetos", dep: false, setor: "Financeiro", rec: 2.695, sub: 0, cpv: 0, desp: 0, trib: 0, ll: 0.957 },
+      { id: 21, sigla: "APS", nome: "APS – Autoridade Portuária de Santos S.A.", dep: false, setor: "Infraestrutura e transporte", rec: 2.19, sub: 0, cpv: 0, desp: 0, trib: 0, ll: 0.725 },
+      { id: 22, sigla: "CBTU", nome: "CBTU – Companhia Brasileira de Trens Urbanos", dep: true, setor: "Infraestrutura e transporte", rec: 0.068, sub: 1.285, cpv: 0, desp: 0, trib: 0, ll: -0.426 },
+      { id: 23, sigla: "CDC", nome: "CDC – Companhia Docas do Ceará", dep: false, setor: "Infraestrutura e transporte", rec: 0.099, sub: 0, cpv: 0, desp: 0, trib: 0, ll: 0.003 },
+      { id: 24, sigla: "CDP", nome: "CDP – Companhia Docas do Pará", dep: false, setor: "Infraestrutura e transporte", rec: 0.417, sub: 0, cpv: 0, desp: 0, trib: 0, ll: 0.086 },
+      { id: 25, sigla: "CDRJ", nome: "CDRJ – Companhia Docas do Rio de Janeiro", dep: false, setor: "Infraestrutura e transporte", rec: 0, sub: 0, cpv: 0, desp: 0, trib: 0, ll: 0, semDados: true },
+      { id: 26, sigla: "CODEBA", nome: "Codeba – Companhia das Docas do Estado da Bahia", dep: false, setor: "Infraestrutura e transporte", rec: 0.291, sub: 0, cpv: 0, desp: 0, trib: 0, ll: 0.018 },
+      { id: 27, sigla: "CODERN", nome: "Codern – Companhia Docas do Rio Grande do Norte", dep: false, setor: "Infraestrutura e transporte", rec: 0.109, sub: 0, cpv: 0, desp: 0, trib: 0, ll: -0.096 },
+      { id: 28, sigla: "CODEVASF", nome: "Codevasf – Companhia de Desenvolvimento dos Vales do São Francisco e do Parnaíba", dep: true, setor: "Infraestrutura e transporte", rec: 0.059, sub: 1.695, cpv: 0, desp: 0, trib: 0, ll: -0.649 },
+      { id: 29, sigla: "INFRA SA", nome: "Infra S.A.", dep: true, setor: "Infraestrutura e transporte", rec: 0.074, sub: 0.275, cpv: 0, desp: 0, trib: 0, ll: -0.126 },
+      { id: 30, sigla: "INFRAERO", nome: "Infraero – Empresa Brasileira de Infraestrutura Aeroportuária", dep: false, setor: "Infraestrutura e transporte", rec: 0.448, sub: 0, cpv: 0, desp: 0, trib: 0, ll: 0.316 },
+      { id: 31, sigla: "TRENSURB", nome: "Trensurb – Empresa de Trens Urbanos de Porto Alegre S.A.", dep: true, setor: "Infraestrutura e transporte", rec: 0.107, sub: 0.324, cpv: 0, desp: 0, trib: 0, ll: -0.008 },
+      { id: 32, sigla: "SGB (CPRM)", nome: "CPRM – Serviço Geológico do Brasil", dep: true, setor: "Minas e energia", rec: 0.004, sub: 0.698, cpv: 0, desp: 0, trib: 0, ll: 0.004 },
+      { id: 33, sigla: "ENBPAR", nome: "ENBPar (grupo) – Empresa Brasileira de Participações em Energia Nuclear e Binacional S.A.", dep: false, setor: "Minas e energia", rec: 4.351, sub: 0, cpv: 0, desp: 0, trib: 0, ll: 0.09 },
+      { id: 34, sigla: "EPE", nome: "EPE – Empresa de Pesquisa Energética", dep: true, setor: "Minas e energia", rec: 0, sub: 0.176, cpv: 0, desp: 0, trib: 0, ll: -0.009 },
+      { id: 35, sigla: "NUCLEP", nome: "Nuclep – Nuclebrás Equipamentos Pesados S.A.", dep: true, setor: "Minas e energia", rec: 0.038, sub: 0.45, cpv: 0, desp: 0, trib: 0, ll: -0.004 },
+      { id: 36, sigla: "PETROBRAS", nome: "Petrobras (grupo)", dep: false, setor: "Minas e energia", rec: 641.818, sub: 0, cpv: 0, desp: 0, trib: 0, ll: 110.605 },
+      { id: 37, sigla: "PPSA", nome: "PPSA – Pré-Sal Petróleo S.A.", dep: false, setor: "Minas e energia", rec: 0.153, sub: 0, cpv: 0, desp: 0, trib: 0, ll: 0.03 },
+      { id: 38, sigla: "ABGF", nome: "ABGF – Agência Brasileira Gestora de Fundos Garantidores e Garantias S.A.", dep: false, setor: "Papel moeda e gestão de ativos", rec: 0.038, sub: 0, cpv: 0, desp: 0, trib: 0, ll: 0.036 },
+      { id: 39, sigla: "CMB", nome: "CMB – Casa da Moeda do Brasil", dep: false, setor: "Papel moeda e gestão de ativos", rec: 1.357, sub: 0, cpv: 0, desp: 0, trib: 0, ll: 0.046 },
+      { id: 40, sigla: "EMGEA", nome: "Emgea – Empresa Gestora de Ativos", dep: false, setor: "Papel moeda e gestão de ativos", rec: 0.914, sub: 0, cpv: 0, desp: 0, trib: 0, ll: 0.9 },
+      { id: 41, sigla: "EBSERH", nome: "Ebserh – Empresa Brasileira de Serviços Hospitalares", dep: true, setor: "Saúde", rec: 0.286, sub: 13.678, cpv: 0, desp: 0, trib: 0, ll: -0.159 },
+      { id: 42, sigla: "GHC", nome: "GHC – Grupo Hospitalar Conceição", dep: true, setor: "Saúde", rec: 0.004, sub: 2.65, cpv: 0, desp: 0, trib: 0, ll: -0.232 },
+      { id: 43, sigla: "HCPA", nome: "HCPA – Hospital de Clínicas de Porto Alegre", dep: true, setor: "Saúde", rec: 0.383, sub: 2.027, cpv: 0, desp: 0, trib: 0, ll: -0.091 },
+      { id: 44, sigla: "HEMOBRAS", nome: "Hemobrás – Empresa Brasileira de Hemoderivados e Biotecnologia", dep: false, setor: "Saúde", rec: 1.106, sub: 0, cpv: 0, desp: 0, trib: 0, ll: 0.158 }
+    ];
+
+    let currentData = JSON.parse(JSON.stringify(DETAILED_PRESETS["HIST_2025"]));
+    let catalogFilter = "todas";
+    let somaScenario = "todas_44";
+    const posterStyle = { bgColor: "#ededf0" };
+
+    const $ = id => document.getElementById(id);
+    const clone = obj => JSON.parse(JSON.stringify(obj));
+
+    function formatBilhoes(val) {
+      const absVal = Math.abs(val);
+      const sign = val < 0 ? "-" : "";
+      if (absVal >= 1) {
+        const txt = absVal.toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+        return `${sign}R$ ${txt} B`;
+      }
+      return `${sign}R$ ${(absVal * 1000).toFixed(0)} M`;
+    }
+
+    function escapeXml(unsafe) {
+      return String(unsafe).replace(/[<>&'"]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', "'": '&apos;', '"': '&quot;' }[c]));
+    }
+
+    function showToast(msg) {
+      const t = $("toastNotification");
+      $("toastMessage").textContent = msg;
+      t.classList.remove("hidden");
+      clearTimeout(showToast._timer);
+      showToast._timer = setTimeout(() => t.classList.add("hidden"), 3000);
+    }
+
+    /* ---------------------- SANKEY: LAYOUT + DESENHO ---------------------- */
+
+    const SANKEY_X = [260, 400, 540, 680, 820]; // colunas: segmentos, receita, custos/LB, despesas/LOp, destino
+    const SANKEY_MID = 715;                     // centro vertical do diagrama
+    const SANKEY_H = 600;                       // altura total da receita (escala)
+    const NODE_W = 16;
+
+    function layoutSankey(d) {
+      const num = k => Math.max(0, Number(d[k]) || 0);
+      const recTotal = Math.max(0.001, num("receita_total"));
+      const scale = SANKEY_H / recTotal;
+      const lop = Number(d.lucro_op_valor) || 0;
+      const ll = Number(d.lucro_liquido_valor) || 0;
+
+      const nodes = {};
+      const add = (id, props) => (nodes[id] = { id, ...props });
+
+      const segs = (d.segmentos || []).map((s, i) =>
+        add("seg" + i, { label: s.nome, value: Math.max(0, Number(s.valor) || 0), color: "#3563b8", pos: "left" }));
+      const rec = add("rec", { label: d.receita_label || "Receita", value: recTotal, color: d.cor_marca || "#2563eb", pos: "above" });
+      const cpv = add("cpv", { label: d.cpv_label || "CPV", value: num("cpv_valor"), color: "#64748b", pos: "right" });
+      const lb = add("lb", { label: d.lucro_bruto_label || "Lucro Bruto", value: num("lucro_bruto_valor"), color: "#0f766e", pos: "below" });
+      const dop = add("dop", { label: d.despesas_op_label || "Despesas Op.", value: num("despesas_op_valor"), color: "#64748b", pos: "right" });
+      const lo = add("lop", { label: d.lucro_op_label || "Resultado Op.", value: Math.abs(lop), color: lop < 0 ? "#dc2626" : "#0f766e", pos: "below" });
+      const ir = add("ir", { label: d.ir_label || "IR/CSLL", value: num("ir_valor"), color: "#94a3b8", pos: "right" });
+      const df = add("dfin", { label: d.desp_fin_label || "Desp. Financeiras", value: num("desp_fin_valor"), color: "#94a3b8", pos: "right" });
+      const lq = add("ll", { label: d.lucro_liquido_label || "Lucro Líquido", value: Math.abs(ll), color: ll < 0 ? "#dc2626" : "#059669", pos: "right" });
+
+      const links = [
+        ...segs.map(s => ({ from: s.id, to: "rec", value: s.value, color: s.color })),
+        { from: "rec", to: "cpv", value: cpv.value, color: cpv.color },
+        { from: "rec", to: "lb", value: lb.value, color: lb.color },
+        { from: "lb", to: "dop", value: dop.value, color: dop.color },
+        { from: "lb", to: "lop", value: lo.value, color: lo.color },
+        { from: "lop", to: "ir", value: ir.value, color: ir.color },
+        { from: "lop", to: "dfin", value: df.value, color: df.color },
+        { from: "lop", to: "ll", value: lq.value, color: lq.color }
+      ];
+
+      // Cada coluna é empilhada de cima para baixo, na mesma ordem usada pelos fluxos
+      const columns = [segs, [rec], [cpv, lb], [dop, lo], [ir, df, lq]];
+      columns.forEach((col, ci) => {
+        const gap = ci === 0 ? 34 : 18;
+        let y = SANKEY_MID - (col.reduce((s, n) => s + n.value * scale, 0) + gap * (col.length - 1)) / 2;
+        col.forEach(n => {
+          n.x = SANKEY_X[ci];
+          n.y = y;
+          n.h = n.value * scale;
+          n.srcOff = 0;
+          n.tgtOff = 0;
+          y += n.h + gap;
+        });
+      });
+
+      const ribbons = links
+        .filter(l => l.value > 0)
+        .map(l => {
+          const s = nodes[l.from], t = nodes[l.to], h = l.value * scale;
+          const sy = s.y + s.srcOff, ty = t.y + t.tgtOff;
+          s.srcOff += h;
+          t.tgtOff += h;
+          const x0 = s.x + NODE_W, x1 = t.x, xm = (x0 + x1) / 2;
+          return `<path d="M${x0},${sy} C${xm},${sy} ${xm},${ty} ${x1},${ty} L${x1},${ty + h} C${xm},${ty + h} ${xm},${sy + h} ${x0},${sy + h} Z" fill="${l.color}" fill-opacity="0.35"/>`;
+        })
+        .join("");
+
+      return { nodes: Object.values(nodes).filter(n => n.value > 0), ribbons };
+    }
+
+    // Avisa quando os níveis não fecham (ex.: dados de catálogo inconsistentes)
+    function balanceNotice(d) {
+      const n = k => Number(d[k]) || 0;
+      const fecha =
+        Math.abs(n("receita_total") - n("cpv_valor") - n("lucro_bruto_valor")) < 0.05 &&
+        Math.abs(n("lucro_bruto_valor") - n("despesas_op_valor") - n("lucro_op_valor")) < 0.05 &&
+        Math.abs(n("lucro_op_valor") - n("ir_valor") - n("desp_fin_valor") - n("lucro_liquido_valor")) < 0.05;
+      if (fecha) return "";
+      return `<text x="500" y="1110" text-anchor="middle" font-family="Inter, sans-serif" font-weight="700" font-size="15" fill="#b45309">Atenção: os valores não fecham entre os níveis; o diagrama é aproximado.</text>`;
+    }
+
+    function nodeLabelSVG(n, bg) {
+      const lines = [...String(n.label).split("\n"), formatBilhoes(n.value)];
+      const L = lines.length, lh = 16, mid = n.y + n.h / 2;
+      let anchor = "start", x = n.x + NODE_W + 10, y0 = mid - ((L - 1) * lh) / 2 + 5;
+      if (n.pos === "left") { anchor = "end"; x = n.x - 10; }
+      if (n.pos === "above") { anchor = "middle"; x = n.x + NODE_W / 2; y0 = n.y - 10 - (L - 1) * lh; }
+      if (n.pos === "below") { anchor = "middle"; x = n.x + NODE_W / 2; y0 = n.y + n.h + 18; }
+      return `<text text-anchor="${anchor}" font-family="Inter, sans-serif" font-size="14" fill="#1f2937" paint-order="stroke" stroke="${bg}" stroke-width="5" stroke-linejoin="round">` +
+        lines.map((t, i) => `<tspan x="${x}" y="${y0 + i * lh}" font-weight="${i === L - 1 ? 800 : 600}">${escapeXml(t)}</tspan>`).join("") +
+        `</text>`;
+    }
+
+    function generateSankeySVG(data) {
+      const W = 1000, H = 1220;
+      const bg = posterStyle.bgColor;
+      const brandColor = data.cor_marca || "#2563eb";
+      const subSize = ((data.subtitulo_1 || "") + (data.subtitulo_2 || "")).length > 16 ? 72 : 94;
+      const recOk = Number.isFinite(Number(data.receita_total)) && Number(data.receita_total) > 0;
+      const { nodes, ribbons } = recOk ? layoutSankey(data) : { nodes: [], ribbons: "" };
+      const notice = recOk
+        ? balanceNotice(data)
+        : `<text x="500" y="640" text-anchor="middle" font-family="Inter, sans-serif" font-weight="800" font-size="30" fill="#991b1b">Receita precisa ser maior que zero</text>`;
+      const rects = nodes.map(n => `<rect x="${n.x}" y="${n.y}" width="${NODE_W}" height="${Math.max(n.h, 1.5)}" rx="3" fill="${n.color}"/>`).join("");
+      const labels = nodes.map(n => nodeLabelSVG(n, bg)).join("");
+
+      return `
+        <svg id="sankeyPosterSvg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="100%" height="100%">
+          <rect width="${W}" height="${H}" rx="18" fill="${bg}"/>
+          <text x="62" y="108" font-family="'Plus Jakarta Sans', sans-serif" font-weight="900" font-size="44" fill="#111827">${escapeXml(data.prefixo || "")}</text>
+          <text x="362" y="112" font-family="'Plus Jakarta Sans', sans-serif" font-weight="900" font-size="48" fill="${brandColor}">${escapeXml(data.nome_exibicao || "")}</text>
+          <text x="500" y="232" text-anchor="middle" font-family="'Plus Jakarta Sans', sans-serif" font-weight="900" font-size="${subSize}">
+            <tspan fill="#0f172a">${escapeXml(data.subtitulo_1 || "")} </tspan>
+            <tspan fill="#2e67b1">${escapeXml(data.subtitulo_2 || "")}</tspan>
+          </text>
+          <g>${ribbons}</g>
+          <g>${rects}</g>
+          <g>${labels}</g>
+          ${notice}
+          <text x="500" y="1150" text-anchor="middle" font-family="Inter, sans-serif" font-weight="700" font-size="17" fill="#1f2937">${escapeXml(data.fonte || "")}</text>
+        </svg>
+      `;
+    }
+
+    /* ---------------------- RENDERIZAÇÃO GERAL ---------------------- */
+
+    function renderPoster() {
+      $("svgCanvasWrapper").innerHTML = generateSankeySVG(currentData);
+      $("currentEntityFootnote").textContent = currentData.fonte || "";
+    }
+
+    function summaryChips() {
+      const ll = Number(currentData.lucro_liquido_valor) || 0;
+      return `
+        <span class="px-3 py-1.5 rounded-lg bg-slate-800 text-xs text-slate-200 border border-slate-700">${escapeXml(currentData.nome_exibicao || "")}</span>
+        <span class="px-3 py-1.5 rounded-lg bg-slate-800 text-xs text-slate-300">Receita ${formatBilhoes(Number(currentData.receita_total) || 0)}</span>
+        <span class="px-3 py-1.5 rounded-lg text-xs font-bold ${ll < 0 ? "bg-red-950 text-red-300" : "bg-emerald-950 text-emerald-300"}">Lucro líq. ${formatBilhoes(ll)}</span>`;
+    }
+
+    function renderAll() {
+      renderPoster();
+      $("topSummaryBar").innerHTML = summaryChips();
+      renderQuickEditor();
+      syncStyleInputs();
+      refreshJsonEditor();
+    }
+
+    function setMainView(view) {
+      const sections = { poster: "posterViewSection", soma: "somaViewSection", mosaic: "mosaicViewSection" };
+      Object.entries(sections).forEach(([k, id]) => $(id).classList.toggle("hidden", k !== view));
+      Object.keys(sections).forEach(k => {
+        $("viewBtn-" + k).className = k === view
+          ? "px-3 py-1.5 rounded-md bg-blue-600 text-white font-semibold transition flex items-center gap-1.5"
+          : "px-3 py-1.5 rounded-md text-slate-300 hover:text-white font-semibold transition flex items-center gap-1.5";
+      });
+      if (view === "soma") renderSoma();
+      if (view === "mosaic") renderMosaic();
+    }
+
+    function toggleViewMode() { setMainView("mosaic"); }
+
+    function switchSidebarTab(name) {
+      ["historico", "catalogo", "json", "estilo"].forEach(t => {
+        $("tabPanel-" + t).classList.toggle("hidden", t !== name);
+        const btn = $("tabBtn-" + t);
+        btn.classList.toggle("tab-active", t === name);
+        btn.classList.toggle("text-slate-400", t !== name);
+      });
+      if (name === "catalogo") renderCatalogList();
+      if (name === "json") refreshJsonEditor(true);
+    }
+
+    /* ---------------------- SÉRIE HISTÓRICA ---------------------- */
+
+    function renderSidebarHistorico() {
+      $("serieHistoricaList").innerHTML = HISTORICO_ANUAL.map(h => `
+        <button onclick="selectHistoricoAno('${h.ano}')" class="w-full text-left p-2.5 rounded-xl bg-slate-800/50 hover:bg-slate-800 border border-slate-700/70 transition flex items-center justify-between">
+          <div>
+            <div class="font-bold text-xs text-white">Ano ${h.ano}${h.nota_verificacao ? ' <span class="ml-1 text-[9px] font-semibold text-amber-300 border border-amber-500/30 rounded px-1">' + escapeXml(h.nota_verificacao) + '</span>' : ""}</div>
+            <div class="text-[10px] text-slate-400 mt-0.5">${escapeXml(h.destaque)}</div>
+          </div>
+          <div class="text-right shrink-0">
+            <div class="text-xs font-extrabold text-emerald-400">${formatBilhoes(h.lucro_liquido_agregado_bi)}</div>
+            <div class="text-[10px] text-slate-400">Fat: ${formatBilhoes(h.faturamento_total_bi)}</div>
+          </div>
+        </button>
+      `).join("");
+    }
+
+    // Composição estimada: só faturamento, subvenção e lucro líquido são dados agregados.
+    // Os demais nós são derivados de forma que o diagrama feche (receita = custos + lucro).
+    function selectHistoricoAno(ano) {
+      const h = HISTORICO_ANUAL.find(item => String(item.ano) === String(ano));
+      if (!h) return;
+      const r1 = v => Math.round(v * 10) / 10;
+      const F = h.faturamento_total_bi, LL = h.lucro_liquido_agregado_bi, SUB = h.subvencoes_tesouro_bi;
+      const oil = r1(F * 0.78);
+      const demais = r1(F - oil - SUB);
+      const cpv = r1(F * 0.58);
+      const lb = r1(F - cpv);
+      const lop = r1(LL > 0 ? LL / 0.66 : LL);      // lucro antes do IR, alíquota de 34%
+      const dop = r1(lb - lop);
+      const ir = r1(Math.max(0, lop - LL));
+      currentData = {
+        id: `HIST_${h.ano}`,
+        categoria: "historico",
+        prefixo: "ESTATAIS",
+        nome_exibicao: `CONSOLIDADAS ${h.ano}`,
+        subtitulo_1: "SÉRIE",
+        subtitulo_2: "HISTÓRICA",
+        cor_marca: "#1d4ed8",
+        periodo: `Ano ${h.ano}`,
+        fonte: "Fonte: faturamento e lucro agregados (SEST/MGI); composição estimada",
+        receita_label: "Faturamento\nTotal",
+        receita_total: F,
+        segmentos: [
+          { nome: "Petróleo e Bancos\n(Gigantes Estatais)", valor: oil, icone: "oil" },
+          { nome: "Demais Estatais\ne Serviços", valor: demais, icone: "truck" },
+          { nome: "Subvenção Tesouro\n(Dependentes)", valor: SUB, icone: "landmark" }
+        ],
+        cpv_label: "CPV, Captação e Custos",
+        cpv_valor: cpv,
+        lucro_bruto_label: "Margem\nBruta",
+        lucro_bruto_valor: lb,
+        despesas_op_label: "Despesas Op. e Pessoal",
+        despesas_op_valor: dop,
+        lucro_op_label: "Resultado\nOperacional",
+        lucro_op_valor: lop,
+        ir_label: "IR/CSLL",
+        ir_valor: ir,
+        desp_fin_label: "Outros",
+        desp_fin_valor: 0,
+        lucro_liquido_label: "Lucro\nLíquido",
+        lucro_liquido_valor: LL
+      };
+      setMainView("poster");
+      renderAll();
+      showToast(`Carregado dados consolidados de ${h.ano}!`);
+    }
+
+    function renderPrincipais() {
+      $("principaisList").innerHTML = Object.values(DETAILED_PRESETS)
+        .filter(p => p.categoria === "principal")
+        .map(p => `
+          <button onclick="loadPreset('${p.id}')" class="w-full text-left p-2.5 rounded-xl bg-slate-800/50 hover:bg-slate-800 border border-slate-700/70 transition flex items-center justify-between">
+            <div>
+              <div class="font-bold text-xs text-white">${escapeXml(p.nome_exibicao)}</div>
+              <div class="text-[10px] text-slate-400 mt-0.5">${escapeXml(p.periodo)}</div>
+            </div>
+            <div class="text-xs font-extrabold ${p.lucro_liquido_valor < 0 ? "text-red-400" : "text-emerald-400"}">${formatBilhoes(p.lucro_liquido_valor)}</div>
+          </button>`)
+        .join("");
+    }
+
+    function loadPreset(id) {
+      currentData = clone(DETAILED_PRESETS[id]);
+      setMainView("poster");
+      renderAll();
+      showToast(`Carregado: ${currentData.nome_exibicao}`);
+    }
+
+    function resetDefault() {
+      currentData = clone(DETAILED_PRESETS["HIST_2025"]);
+      setMainView("poster");
+      renderAll();
+      showToast("Dados originais restaurados.");
+    }
+
+    /* ---------------------- EDITOR RÁPIDO / JSON / ESTILO ---------------------- */
+
+    const QUICK_FIELDS = [
+      ["receita_total", "Receita"],
+      ["cpv_valor", "CPV"],
+      ["lucro_bruto_valor", "Lucro Bruto"],
+      ["despesas_op_valor", "Desp. Op."],
+      ["lucro_op_valor", "Lucro Op."],
+      ["ir_valor", "IR/CSLL"],
+      ["desp_fin_valor", "Desp. Fin."],
+      ["lucro_liquido_valor", "Lucro Líq."]
+    ];
+
+    const round2 = v => Math.round((Number(v) || 0) * 100) / 100;
+
+    function renderQuickEditor() {
+      $("quickNodeEditor").innerHTML = `
+        <button onclick="openQuickModal()" class="w-full py-2 px-3 rounded-lg bg-slate-900 hover:bg-slate-700 border border-slate-700 text-xs text-slate-200 font-semibold transition flex items-center justify-center gap-2">
+          <i class="fa-solid fa-pen-to-square text-blue-400"></i> Editar valores do cartaz
+        </button>`;
+    }
+
+    // Valores só entram no cartaz ao clicar em Aplicar (evita redesenhar a cada tecla)
+    function openQuickModal() {
+      $("quickModalFields").innerHTML = QUICK_FIELDS.map(([k, label]) => `
+        <label class="flex flex-col gap-1 text-[11px] text-slate-300">
+          <span>${label}</span>
+          <input type="number" step="0.01" data-key="${k}" value="${round2(currentData[k])}" class="px-2 py-1.5 bg-slate-950 border border-slate-700 rounded-lg text-xs text-white focus:outline-none focus:border-blue-500">
+        </label>`).join("");
+      $("quickModalError").classList.add("hidden");
+      $("quickModal").classList.remove("hidden");
+      setTimeout(() => { const first = $("quickModalFields").querySelector("input"); if (first) first.focus(); }, 0);
+    }
+
+    function closeQuickModal() {
+      $("quickModal").classList.add("hidden");
+    }
+
+    function showQuickError(msg) {
+      const box = $("quickModalError");
+      box.textContent = msg;
+      box.classList.remove("hidden");
+    }
+
+    function applyQuickModal() {
+      const next = {};
+      for (const el of $("quickModalFields").querySelectorAll("input")) {
+        const v = el.value.trim() === "" ? NaN : Number(el.value.replace(",", "."));
+        if (!Number.isFinite(v)) {
+          el.focus();
+          return showQuickError(`Valor inválido no campo ${el.dataset.key}.`);
+        }
+        next[el.dataset.key] = round2(v);
+      }
+      if (!(next.receita_total > 0)) return showQuickError("A receita precisa ser maior que zero.");
+      Object.assign(currentData, next);
+      closeQuickModal();
+      renderAll();
+      showToast("Valores aplicados ao cartaz!");
+    }
+
+    document.addEventListener("keydown", e => { if (e.key === "Escape") closeQuickModal(); });
+
+    function syncStyleInputs() {
+      const map = { inputPrefix: "prefixo", inputCompanyTitle: "nome_exibicao", inputTitlePart1: "subtitulo_1", inputTitlePart2: "subtitulo_2" };
+      Object.entries(map).forEach(([inputId, key]) => {
+        const el = $(inputId);
+        if (document.activeElement !== el) el.value = currentData[key] || "";
+      });
+    }
+
+    function updateStyleConfig() {
+      currentData.prefixo = $("inputPrefix").value;
+      currentData.nome_exibicao = $("inputCompanyTitle").value;
+      currentData.subtitulo_1 = $("inputTitlePart1").value;
+      currentData.subtitulo_2 = $("inputTitlePart2").value;
+      renderPoster();
+      $("topSummaryBar").innerHTML = summaryChips();
+    }
+
+    function refreshJsonEditor(force) {
+      const ta = $("jsonTextarea");
+      if (force || document.activeElement !== ta) ta.value = JSON.stringify(currentData, null, 2);
+    }
+
+    function applyJsonFromEditor() {
+      const box = $("jsonErrorBox");
+      try {
+        const obj = JSON.parse($("jsonTextarea").value);
+        if (typeof obj !== "object" || obj === null || Array.isArray(obj)) throw new Error("o JSON precisa ser um objeto.");
+        if (typeof obj.receita_total !== "number") throw new Error('campo "receita_total" obrigatório (número).');
+        currentData = obj;
+        box.classList.add("hidden");
+        setMainView("poster");
+        renderAll();
+        showToast("JSON aplicado ao gráfico!");
+      } catch (e) {
+        box.textContent = "Erro no JSON: " + e.message;
+        box.classList.remove("hidden");
+      }
+    }
+
+    async function copyCurrentJson() {
+      const txt = $("jsonTextarea").value;
+      try {
+        await navigator.clipboard.writeText(txt);
+      } catch (e) {
+        $("jsonTextarea").select();
+        document.execCommand("copy");
+      }
+      showToast("JSON copiado!");
+    }
+
+    /* ---------------------- CATÁLOGO / ESTATAIS ---------------------- */
+
+    // Monta o diagrama a partir de uma ou mais estatais.
+    // O relatório não traz custos por empresa: o diagrama mostra receita, custos totais e resultado.
+    function buildPosterData(list, nome) {
+      const sum = k => list.reduce((s, e) => s + (Number(e[k]) || 0), 0);
+      const receita = round2(sum("rec") + sum("sub"));
+      const ll = round2(sum("ll"));
+      const cpv = round2(Math.min(receita, Math.max(0, receita - ll)));
+      const lb = round2(receita - cpv);
+      const segs = [{ nome: "Vendas e Serviços", valor: round2(sum("rec")), icone: "chart" }];
+      if (sum("sub") > 0) segs.push({ nome: "Subvenção do Tesouro", valor: round2(sum("sub")), icone: "landmark" });
+      const plural = list.length > 1 ? "is" : "";
+      return {
+        id: "CUSTOM",
+        categoria: "custom",
+        prefixo: "COMO AS",
+        nome_exibicao: nome,
+        subtitulo_1: "ESTATAIS",
+        subtitulo_2: "EM NÚMEROS",
+        cor_marca: "#2563eb",
+        periodo: "Ano-base 2024",
+        fonte: "Fonte: SEST, relatório ano-base 2025 (" + list.length + " estatal" + plural + "); valores em R$ bi",
+        receita_label: "Receita\nTotal",
+        receita_total: receita,
+        segmentos: segs,
+        cpv_label: "Custos e despesas\n(não detalhados)",
+        cpv_valor: cpv,
+        lucro_bruto_label: "Resultado",
+        lucro_bruto_valor: lb,
+        despesas_op_label: "Despesas Op.",
+        despesas_op_valor: 0,
+        lucro_op_label: "Resultado\nOperacional",
+        lucro_op_valor: lb,
+        ir_label: "IR/CSLL",
+        ir_valor: 0,
+        desp_fin_label: "Outros",
+        desp_fin_valor: 0,
+        lucro_liquido_label: "Lucro\nLíquido",
+        lucro_liquido_valor: ll
+      };
+    }
+    function loadEntity(id) {
+      const e = CATALOG_44_ESTATAIS.find(x => x.id === id);
+      if (!e) return;
+      currentData = e.presetRef ? clone(DETAILED_PRESETS[e.presetRef]) : buildPosterData([e], e.sigla);
+      setMainView("poster");
+      renderAll();
+      showToast(`Diagrama de ${e.sigla} gerado!`);
+    }
+
+    function entityCard(e) {
+      return `
+        <button onclick="loadEntity(${e.id})" class="w-full text-left p-3 rounded-xl bg-slate-800/50 hover:bg-slate-800 border border-slate-700/70 transition flex items-center justify-between gap-2">
+          <div class="min-w-0">
+            <div class="text-xs font-bold text-white">${escapeXml(e.sigla)}${e.dep ? ' <span class="text-[10px] text-amber-300">• dependente</span>' : ""}</div>
+            <div class="text-[10px] text-slate-400 truncate">${escapeXml(e.setor)}</div>
+          </div>
+          <div class="text-xs font-extrabold shrink-0 ${e.ll < 0 ? "text-red-400" : "text-emerald-400"}">${e.semDados ? "sem dados" : formatBilhoes(e.ll)}</div>
+        </button>`;
+    }
+
+    function setCatalogFilter(f) {
+      catalogFilter = f;
+      renderCatalogList();
+    }
+
+    function renderCatalogList() {
+      const total = CATALOG_44_ESTATAIS.length;
+      const nDep = CATALOG_44_ESTATAIS.filter(e => e.dep).length;
+      const counts = { todas: total, nao_dep: total - nDep, dep: nDep };
+      const labels = { todas: "Todas", nao_dep: "Não Dep.", dep: "Dependentes" };
+      Object.keys(counts).forEach(k => {
+        const b = $("catFilter-" + k);
+        b.textContent = `${labels[k]} (${counts[k]})`;
+        b.className = k === catalogFilter
+          ? "flex-1 py-1 px-2 rounded bg-blue-600 text-white font-semibold"
+          : "flex-1 py-1 px-2 rounded bg-slate-900 text-slate-300 hover:bg-slate-700";
+      });
+
+      const q = ($("searchCatalog").value || "").trim().toLowerCase();
+      const list = CATALOG_44_ESTATAIS.filter(e =>
+        (catalogFilter === "todas" || (catalogFilter === "dep") === e.dep) &&
+        (!q || `${e.sigla} ${e.nome} ${e.setor}`.toLowerCase().includes(q)));
+
+      $("catalogListContainer").innerHTML =
+        `<p class="text-[11px] text-slate-400 mb-1">Dados SEST, ano-base 2025: ${total} de ${TOTAL_ESTATAIS_ALVO} estatais.</p>` +
+        (list.map(entityCard).join("") || '<p class="text-xs text-slate-400 p-2">Nenhuma estatal encontrada.</p>');
+    }
+
+    function renderMosaic() {
+      $("mosaicCoverageNote").textContent = `Dados SEST, ano-base 2025: ${CATALOG_44_ESTATAIS.length} de ${TOTAL_ESTATAIS_ALVO} estatais.`;
+      $("mosaicGridContainer").innerHTML = CATALOG_44_ESTATAIS.map(entityCard).join("");
+    }
+
+    /* ---------------------- SOMA: LUCRO x PREJUÍZO ---------------------- */
+
+    const SCENARIO_BTN_ON = "px-3 py-1.5 rounded-lg bg-blue-600 text-white font-bold transition";
+    const SCENARIO_BTN_OFF = "px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold transition";
+    const SCENARIO_LABELS = { todas_44: "Todas", sem_petrobras: "Sem Petrobras", sem_petro_bancos: "Sem Petro e Bancos" };
+
+    function somaEntities() {
+      return CATALOG_44_ESTATAIS.filter(e => {
+        if (somaScenario === "sem_petrobras") return e.sigla !== "PETROBRAS";
+        if (somaScenario === "sem_petro_bancos") return e.sigla !== "PETROBRAS" && !/Financeiro/.test(e.setor);
+        return true;
+      });
+    }
+
+    function setSomaScenario(s) {
+      somaScenario = s;
+      Object.keys(SCENARIO_LABELS).forEach(k => {
+        $("scenBtn-" + k).className = k === s ? SCENARIO_BTN_ON : SCENARIO_BTN_OFF;
+      });
+      renderSoma();
+    }
+
+    function kpiCard(label, value, cls) {
+      return `<div class="bg-slate-900 border border-slate-800 rounded-2xl p-4">
+        <div class="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">${label}</div>
+        <div class="text-lg font-black mt-1 ${cls}">${value}</div>
+      </div>`;
+    }
+
+    function renderSoma() {
+      const list = somaEntities();
+      const sum = (arr, k) => arr.reduce((s, e) => s + (Number(e[k]) || 0), 0);
+      const lucrativas = list.filter(e => e.ll > 0 && !e.dep);
+      const deficitarias = list.filter(e => e.ll < 0 || e.dep);
+      const lucroTot = sum(lucrativas, "ll");
+      const prejTot = sum(list.filter(e => e.ll < 0), "ll");
+      const defTot = sum(deficitarias, "ll");
+      const recTot = sum(list, "rec") + sum(list, "sub");
+      const subTot = sum(list, "sub");
+      const resultado = sum(list, "ll");
+      const pct = (lucroTot - prejTot) > 0 ? (lucroTot / (lucroTot - prejTot)) * 100 : 0;
+
+      $("somaActiveCountBadge").textContent = `${list.length} estatais no cenário • ${SCENARIO_LABELS[somaScenario]}`;
+      $("somaKpiCards").innerHTML =
+        kpiCard("Receita total", formatBilhoes(recTot), "text-white") +
+        kpiCard("Lucro (lucrativas)", formatBilhoes(lucroTot), "text-emerald-400") +
+        kpiCard("Prejuízo (deficitárias)", formatBilhoes(prejTot), "text-red-400") +
+        kpiCard("Subvenção do Tesouro", formatBilhoes(subTot), "text-amber-300") +
+        kpiCard("Resultado líquido", formatBilhoes(resultado), resultado < 0 ? "text-red-400" : "text-emerald-400");
+
+      $("somaThermometerBox").innerHTML = `
+        <div class="flex justify-between text-xs">
+          <span class="text-emerald-400 font-bold">Lucro: ${formatBilhoes(lucroTot)}</span>
+          <span class="text-red-400 font-bold">Prejuízo: ${formatBilhoes(prejTot)}</span>
+        </div>
+        <div class="h-4 rounded-full bg-red-500/70 overflow-hidden">
+          <div class="h-full bg-emerald-500" style="width:${pct.toFixed(1)}%"></div>
+        </div>
+        <p class="text-[11px] text-slate-400">Participação do lucro no total de lucros + prejuízos: ${pct.toFixed(0)}%.</p>`;
+
+      $("totalLucrativasHeader").textContent = `+${formatBilhoes(lucroTot)}`;
+      $("totalDeficitariasHeader").textContent = formatBilhoes(defTot);
+      $("listaLucrativasContainer").innerHTML = lucrativas.map(entityCard).join("") || '<p class="text-xs text-slate-400 p-2">Nenhuma estatal lucrativa neste cenário.</p>';
+      $("listaDeficitariasContainer").innerHTML = deficitarias.map(entityCard).join("") || '<p class="text-xs text-slate-400 p-2">Nenhuma estatal deficitária neste cenário.</p>';
+    }
+
+    function generateSankeyFromCurrentSoma() {
+      currentData = buildPosterData(somaEntities(), "SOMA GERAL");
+      currentData.fonte = `Fonte: SEST ano-base 2025, cenário "${SCENARIO_LABELS[somaScenario]}" (${somaEntities().length} estatais); valores em R$ bi`;
+      setMainView("poster");
+      renderAll();
+      showToast("Cartaz Sankey da soma gerado!");
+    }
+
+    /* ---------------------- EXPORTAÇÃO ---------------------- */
+
+    function posterSVGString() {
+      const svg = $("sankeyPosterSvg").cloneNode(true);
+      svg.setAttribute("width", 1000);
+      svg.setAttribute("height", 1220);
+      return new XMLSerializer().serializeToString(svg);
+    }
+
+    function fileBase() {
+      return (currentData.nome_exibicao || "sankey")
+        .toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "")
+        .replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "sankey";
+    }
+
+    function downloadBlob(blob, name) {
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = name;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    }
+
+    function exportPosterSVG() {
+      downloadBlob(new Blob([posterSVGString()], { type: "image/svg+xml;charset=utf-8" }), fileBase() + ".svg");
+      showToast("SVG exportado!");
+    }
+
+    function exportPosterPNG() {
+      const url = URL.createObjectURL(new Blob([posterSVGString()], { type: "image/svg+xml;charset=utf-8" }));
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = 2000;
+        canvas.height = 2440;
+        const ctx = canvas.getContext("2d");
+        ctx.scale(2, 2);
+        ctx.drawImage(img, 0, 0, 1000, 1220);
+        URL.revokeObjectURL(url);
+        canvas.toBlob(blob => {
+          if (!blob) return showToast("Falha ao gerar PNG.");
+          downloadBlob(blob, fileBase() + ".png");
+          showToast("PNG HD exportado!");
+        }, "image/png");
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(url);
+        showToast("Falha ao gerar PNG.");
+      };
+      img.src = url;
+    }
+
+    /* ---------------------- INICIALIZAÇÃO ---------------------- */
+
+    window.onload = function () {
+      renderSidebarHistorico();
+      renderPrincipais();
+      renderCatalogList();
+      setSomaScenario("todas_44");
+      setMainView("poster");
+      renderAll();
+    };
+  </script>
+</body>
+</html>
