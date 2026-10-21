@@ -334,12 +334,13 @@
           <p class="text-xs text-slate-300">Totais agregados por período. Nomes e CPFs dos portadores não aparecem nesta página.</p>
           <div class="flex flex-wrap gap-2" id="cartoesTabs"></div>
         </div>
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+        <div id="cartoesKpis" class="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
           <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4"><div class="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">Total gasto</div><div id="cartoesTotal" class="text-lg font-black mt-1 text-white"></div></div>
           <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4"><div class="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">Transações</div><div id="cartoesTrans" class="text-lg font-black mt-1 text-white"></div></div>
           <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4"><div class="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">Portadores</div><div id="cartoesPort" class="text-lg font-black mt-1 text-white"></div></div>
         </div>
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5">
+        <div id="cartoesCompare" class="hidden bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4"></div>
+        <div id="cartoesBarsCard" class="bg-slate-900 border border-slate-800 rounded-2xl p-5">
           <h3 class="font-display font-bold text-sm text-white mb-3">Top 15 órgãos vinculados</h3>
           <div id="cartoesBars" class="space-y-2"></div>
         </div>
@@ -1136,7 +1137,7 @@
 
     // Totais agregados do CPGF (2019–2022 e 2023–2026); sem dados de pessoas físicas
     const CARTOES_CPGF = {"todos":{"total":168784452.97,"transacoes":1218,"portadores":133,"vinculados":[{"nome":"20101 - Presidência da República","total":162096827.51,"transacoes":573},{"nome":"60000 - Gabinete da Vice-Presidência da República","total":5568723.92,"transacoes":137},{"nome":"20415 - Empresa Brasil de Comunicação","total":829229.76,"transacoes":332},{"nome":"20116 - Fundo de Imprensa Nacional","total":289671.78,"transacoes":176}]},"2019–2022":{"total":84546309.15,"transacoes":537,"portadores":88,"vinculados":[{"nome":"20101 - Presidência da República","total":82503461.64,"transacoes":250},{"nome":"60000 - Gabinete da Vice-Presidência da República","total":1333098.16,"transacoes":59},{"nome":"20415 - Empresa Brasil de Comunicação","total":497973.29,"transacoes":125},{"nome":"20116 - Fundo de Imprensa Nacional","total":211776.06,"transacoes":103}]},"2023–2026":{"total":84238143.82,"transacoes":681,"portadores":89,"vinculados":[{"nome":"20101 - Presidência da República","total":79593365.87,"transacoes":323},{"nome":"60000 - Gabinete da Vice-Presidência da República","total":4235625.76,"transacoes":78},{"nome":"20415 - Empresa Brasil de Comunicação","total":331256.47,"transacoes":207},{"nome":"20116 - Fundo de Imprensa Nacional","total":77895.72,"transacoes":73}]}};
-    const CARTOES_PERIODOS = [["todos", "Todos"], ["2019–2022", "2019 a 2022"], ["2023–2026", "2023 a 2026"]];
+    const CARTOES_PERIODOS = [["todos", "Todos"], ["2019–2022", "2019 a 2022"], ["2023–2026", "2023 a 2026"], ["comparar", "Comparar períodos"]];
     let cartoesPeriodo = "todos";
 
     function setCartoesPeriodo(p) {
@@ -1144,11 +1145,56 @@
       renderCartoes();
     }
 
+    function variacao(a, b) {
+      if (!a) return "—";
+      const p = (b - a) / a * 100;
+      return (p > 0 ? "+" : "") + p.toFixed(1).replace(".", ",") + "%";
+    }
+
+    function renderComparacao() {
+      const brl = v => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+      const A = CARTOES_CPGF["2019–2022"], B = CARTOES_CPGF["2023–2026"];
+      const nomes = [...new Set([...A.vinculados, ...B.vinculados].map(v => v.nome))];
+      const porOrgao = (d, nome) => (d.vinculados.find(v => v.nome === nome) || { total: 0, transacoes: 0 });
+      const linhas = nomes
+        .map(n => ({ nome: n, a: porOrgao(A, n).total, b: porOrgao(B, n).total }))
+        .sort((x, y) => (y.a + y.b) - (x.a + x.b))
+        .map(r => '<tr class="border-t border-slate-800"><td class="py-2 pr-3 text-slate-200">' + escapeXml(r.nome) + '</td>' +
+          '<td class="py-2 px-3 text-right tabular-nums">' + brl(r.a) + '</td>' +
+          '<td class="py-2 px-3 text-right tabular-nums">' + brl(r.b) + '</td>' +
+          '<td class="py-2 pl-3 text-right tabular-nums text-amber-300">' + variacao(r.a, r.b) + '</td></tr>').join("");
+      const linhaResumo = (rotulo, a, b, fmt) =>
+        '<tr class="border-t border-slate-800 font-semibold"><td class="py-2 pr-3 text-white">' + rotulo + '</td>' +
+        '<td class="py-2 px-3 text-right tabular-nums text-white">' + fmt(a) + '</td>' +
+        '<td class="py-2 px-3 text-right tabular-nums text-white">' + fmt(b) + '</td>' +
+        '<td class="py-2 pl-3 text-right tabular-nums text-amber-300">' + variacao(a, b) + '</td></tr>';
+      const num = v => v.toLocaleString("pt-BR");
+      return '<h3 class="font-display font-bold text-sm text-white">Comparação: 2019 a 2022 × 2023 a 2026</h3>' +
+        '<div class="overflow-x-auto"><table class="w-full text-xs text-slate-300">' +
+        '<thead><tr class="text-left text-slate-400"><th class="py-2 pr-3 font-semibold">Órgão vinculado</th><th class="py-2 px-3 text-right font-semibold">2019 a 2022</th><th class="py-2 px-3 text-right font-semibold">2023 a 2026</th><th class="py-2 pl-3 text-right font-semibold">Variação</th></tr></thead>' +
+        '<tbody>' +
+          linhaResumo("Total gasto", A.total, B.total, brl) +
+          linhaResumo("Transações", A.transacoes, B.transacoes, num) +
+          linhaResumo("Portadores", A.portadores, B.portadores, num) +
+        '</tbody></table></div>' +
+        '<h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 pt-2">Por órgão vinculado</h4>' +
+        '<div class="overflow-x-auto"><table class="w-full text-xs text-slate-300"><tbody>' + linhas + '</tbody></table></div>' +
+        '<p class="text-[11px] text-slate-500">Variação = (2023 a 2026 − 2019 a 2022) ÷ 2019 a 2022.</p>';
+    }
+
     function renderCartoes() {
       const brl = v => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+      const comparando = cartoesPeriodo === "comparar";
       $("cartoesTabs").innerHTML = CARTOES_PERIODOS.map(([k, label]) =>
         '<button onclick="setCartoesPeriodo(\'' + k + '\')" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition ' +
         (k === cartoesPeriodo ? "bg-blue-600 text-white" : "bg-slate-800 text-slate-300 hover:bg-slate-700") + '">' + label + '</button>').join("");
+      $("cartoesKpis").classList.toggle("hidden", comparando);
+      $("cartoesBarsCard").classList.toggle("hidden", comparando);
+      $("cartoesCompare").classList.toggle("hidden", !comparando);
+      if (comparando) {
+        $("cartoesCompare").innerHTML = renderComparacao();
+        return;
+      }
       const d = CARTOES_CPGF[cartoesPeriodo];
       const max = Math.max(...d.vinculados.map(v => v.total));
       $("cartoesTotal").textContent = brl(d.total);
