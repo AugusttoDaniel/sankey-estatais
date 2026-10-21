@@ -229,6 +229,9 @@
           <button onclick="setMainView('mosaic')" id="viewBtn-mosaic" class="px-3 py-1.5 rounded-md text-slate-300 hover:text-white font-semibold transition flex items-center gap-1.5">
             <i class="fa-solid fa-grip"></i> Mosaico
           </button>
+          <button onclick="setMainView('cartoes')" id="viewBtn-cartoes" class="px-3 py-1.5 rounded-md text-slate-300 hover:text-white font-semibold transition flex items-center gap-1.5">
+            <i class="fa-solid fa-credit-card"></i> Cartões CPGF
+          </button>
         </div>
 
         <button onclick="exportPosterPNG()" class="px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-lg shadow-emerald-600/20 transition flex items-center gap-1.5">
@@ -320,6 +323,26 @@
           <p id="mosaicCoverageNote" class="text-xs text-amber-300 mt-2"></p>
         </div>
         <div id="mosaicGridContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3.5"></div>
+      </div>
+    </section>
+
+    <!-- VIEW 4: CARTÕES CPGF (somente totais agregados, sem nomes ou CPFs) -->
+    <section id="cartoesViewSection" class="hidden flex-1 p-4 sm:p-8 overflow-y-auto space-y-6">
+      <div class="max-w-4xl mx-auto space-y-6">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 sm:p-6 space-y-3">
+          <h2 class="text-xl font-display font-black text-white">Gastos com Cartão CPGF</h2>
+          <p class="text-xs text-slate-300">Totais agregados por período. Nomes e CPFs dos portadores não aparecem nesta página.</p>
+          <div class="flex flex-wrap gap-2" id="cartoesTabs"></div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4"><div class="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">Total gasto</div><div id="cartoesTotal" class="text-lg font-black mt-1 text-white"></div></div>
+          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4"><div class="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">Transações</div><div id="cartoesTrans" class="text-lg font-black mt-1 text-white"></div></div>
+          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4"><div class="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">Portadores</div><div id="cartoesPort" class="text-lg font-black mt-1 text-white"></div></div>
+        </div>
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5">
+          <h3 class="font-display font-bold text-sm text-white mb-3">Top 15 órgãos vinculados</h3>
+          <div id="cartoesBars" class="space-y-2"></div>
+        </div>
       </div>
     </section>
 
@@ -652,7 +675,7 @@
     }
 
     function setMainView(view) {
-      const sections = { poster: "posterViewSection", soma: "somaViewSection", mosaic: "mosaicViewSection" };
+      const sections = { poster: "posterViewSection", soma: "somaViewSection", mosaic: "mosaicViewSection", cartoes: "cartoesViewSection" };
       Object.entries(sections).forEach(([k, id]) => $(id).classList.toggle("hidden", k !== view));
       Object.keys(sections).forEach(k => {
         $("viewBtn-" + k).className = k === view
@@ -661,6 +684,7 @@
       });
       if (view === "soma") renderSoma();
       if (view === "mosaic") renderMosaic();
+      if (view === "cartoes") renderCartoes();
     }
 
     function toggleViewMode() { setMainView("mosaic"); }
@@ -1109,6 +1133,33 @@
     }
 
     /* ---------------------- INICIALIZAÇÃO ---------------------- */
+
+    // Totais agregados do CPGF (2019–2022 e 2023–2026); sem dados de pessoas físicas
+    const CARTOES_CPGF = {"todos":{"total":168784452.97,"transacoes":1218,"portadores":133,"vinculados":[{"nome":"20101 - Presidência da República","total":162096827.51,"transacoes":573},{"nome":"60000 - Gabinete da Vice-Presidência da República","total":5568723.92,"transacoes":137},{"nome":"20415 - Empresa Brasil de Comunicação","total":829229.76,"transacoes":332},{"nome":"20116 - Fundo de Imprensa Nacional","total":289671.78,"transacoes":176}]},"2019–2022":{"total":84546309.15,"transacoes":537,"portadores":88,"vinculados":[{"nome":"20101 - Presidência da República","total":82503461.64,"transacoes":250},{"nome":"60000 - Gabinete da Vice-Presidência da República","total":1333098.16,"transacoes":59},{"nome":"20415 - Empresa Brasil de Comunicação","total":497973.29,"transacoes":125},{"nome":"20116 - Fundo de Imprensa Nacional","total":211776.06,"transacoes":103}]},"2023–2026":{"total":84238143.82,"transacoes":681,"portadores":89,"vinculados":[{"nome":"20101 - Presidência da República","total":79593365.87,"transacoes":323},{"nome":"60000 - Gabinete da Vice-Presidência da República","total":4235625.76,"transacoes":78},{"nome":"20415 - Empresa Brasil de Comunicação","total":331256.47,"transacoes":207},{"nome":"20116 - Fundo de Imprensa Nacional","total":77895.72,"transacoes":73}]}};
+    const CARTOES_PERIODOS = [["todos", "Todos"], ["2019–2022", "2019 a 2022"], ["2023–2026", "2023 a 2026"]];
+    let cartoesPeriodo = "todos";
+
+    function setCartoesPeriodo(p) {
+      cartoesPeriodo = p;
+      renderCartoes();
+    }
+
+    function renderCartoes() {
+      const brl = v => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+      $("cartoesTabs").innerHTML = CARTOES_PERIODOS.map(([k, label]) =>
+        '<button onclick="setCartoesPeriodo(\'' + k + '\')" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition ' +
+        (k === cartoesPeriodo ? "bg-blue-600 text-white" : "bg-slate-800 text-slate-300 hover:bg-slate-700") + '">' + label + '</button>').join("");
+      const d = CARTOES_CPGF[cartoesPeriodo];
+      const max = Math.max(...d.vinculados.map(v => v.total));
+      $("cartoesTotal").textContent = brl(d.total);
+      $("cartoesTrans").textContent = d.transacoes.toLocaleString("pt-BR");
+      $("cartoesPort").textContent = d.portadores;
+      $("cartoesBars").innerHTML = d.vinculados.map(v =>
+        '<div style="display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,2fr) auto;gap:10px;align-items:center;font-size:13px">' +
+        '<div class="text-slate-200 truncate" title="' + escapeXml(v.nome) + '">' + escapeXml(v.nome) + '</div>' +
+        '<div class="bg-slate-800 rounded-md h-2.5 overflow-hidden"><div class="h-full bg-blue-500 rounded-md" style="width:' + (v.total / max * 100).toFixed(1) + '%"></div></div>' +
+        '<div class="text-right text-slate-100 whitespace-nowrap tabular-nums">' + brl(v.total) + ' <span class="text-slate-400">· ' + v.transacoes + '</span></div></div>').join("");
+    }
 
     window.onload = function () {
       renderSidebarHistorico();
